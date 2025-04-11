@@ -1,189 +1,25 @@
 #include "RS485_Region_handler.h"
-#include "sensor_task.h"
-#include "pump_task.h"
-#include "pt100_task.h"
-#include "side_card_task.h"
-#include "power_task.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#ifdef CDU_RS485
 #include "main_task.h"
-typedef enum {
-  AUTOMATIC_MODE = SYSPARASET_REG_START,
-  TEMPERATURE_SET_POINT,
-  FLOW_SET_POINT,
-  DIFFERENTIAL_PRESSURE_SET_POINT,
-  MIN_PUMP_SPEED,
-  PUMP_STOP_DELAY,
-  PRESSURE_ALARM_MODE,
-  PRESSURE_ALARM_DELAY,
-  OUTLET_FLUID_LOW_PRESSURE_ALARM,
-  OUTLET_FLUID_HIGH_PRESSURE_ALARM,
-  INLET_FLUID_LOW_PRESSURE_ALARM,
-  INLET_FLUID_HIGH_PRESSURE_ALARM,
-  SIDECAR_RETURN_FLUID_LOW_PRESSURE_ALARM,
-  SIDECAR_RETURN_FLUID_HIGH_PRESSURE_ALARM,
-  FLOW_ALARM_MODE,
-  LOW_FLOW_ALARM,
-  LOW_FLOW_DELAY_PERIOD,
-  OVER_FLOW_ALARM,
-  OVER_FLOW_DELAY_PERIOD,
-  TEMP_ALARM_MODE,
-  TEMP_ALARM_DELAY_PERIOD,
-  LOW_OUTLET_FLUID_TEMP_ALARM,
-  HIGH_OUTLET_FLUID_TEMP_ALARM,
-  HIGH_AMBIENT_TEMP_ALARM,
-  LEAK_DETECTION_MODE,
-  CDU_DETECTING_DELAY_PERIOD,
-  SERVER_DETECTING_DELAY_PERIOD,
-  SIDECAR_DETECTING_DELAY_PERIOD,
-  CDU_DEW_POINT_CALIBRATION,
-  CDU_TEMP_COMPENSATION,
-  CDU_FLUID_INLET_TEMP_CALIBRATION,
-  CDU_FLUID_OUTLET_TEMP_CALIBRATION,
-  PT100_ABNORMAL_TEMPERATURE_LOW,
-  PT100_ABNORMAL_TEMPERATURE_HIGH,
-  NTC_ABNORMAL_TEMPERATURE_LOW,
-  NTC_ABNORMAL_TEMPERATURE_HIGH,
-  ABNORMAL_PRESSURE_LOW,
-  ABNORMAL_PRESSURE_HIGH,
-} SysParaSetCase_t;
+#include "power_task.h"
+#include "pt100_task.h"
+#include "pump_task.h"
+#include "sensor_task.h"
+#include "side_card_task.h"
+#elif SENS_RS485
+#include "pressure_task.h"
+#include "pt100_task.h"
+#elif FAN_RS485
+#include "FG_task.h"
+#include "PWM_task.h"
+#include "fan_main_task.h"
+#endif
 
-typedef enum {
-  SYSTEM_ALARM_STATUS = SYSPARADISP_REG_START,
-  SYSTEM_UPTIME_HIGH,
-  SYSTEM_UPTIME_LOW,
-  PUMP1_RUNTIME_HIGH,
-  PUMP1_RUNTIME_LOW,
-  PUMP2_RUNTIME_HIGH,
-  PUMP2_RUNTIME_LOW,
-  PERIPHERAL_STATUS,
-} SysParaDispCase_t;
-
-typedef enum {
-  PT100_1_TEMPERATURE = DATAREAD_REG_START,
-  PT100_2_TEMPERATURE,
-  PT100_3_TEMPERATURE,
-  PT100_4_TEMPERATURE,
-  NTC_1_TEMPERATURE,
-  NTC_2_TEMPERATURE,
-  NTC_3_TEMPERATURE,
-  NTC_4_TEMPERATURE,
-  PRESSURE_1_VALUE,
-  PRESSURE_2_VALUE,
-  PRESSURE_3_VALUE,
-  PRESSURE_4_VALUE,
-  FLOW_VALUE,
-  PUMP_1_FEEDBACK,
-  PUMP_2_FEEDBACK,
-  LEAK_SENSOR,
-  POWER_1_STATUS,
-  POWER_1_VOLTAGE_INPUT,
-  POWER_1_CURRENT_INPUT,
-  POWER_1_TEMPERATURE,
-  POWER_2_STATUS,
-  POWER_2_VOLTAGE_INPUT,
-  POWER_2_CURRENT_INPUT,
-  POWER_2_TEMPERATURE,
-  TEMPERATURE,
-  HUMIDITY,
-  DEW_TEMPERATURE,
-  FAN_1_FEEDBACK_TEMP,
-  DEVICE_CONNECTED,
-  RESERVED_1,
-  RESERVED_2,
-  RESERVED_3,
-} DataReadCase_t;
-
-typedef enum {
-  SIDECAR_PT100_1_TEMPERATURE = SENS_CARD_DATAREAD_REG_START,
-  SIDECAR_PT100_2_TEMPERATURE,
-  SIDECAR_PT100_3_TEMPERATURE,
-  SIDECAR_PT100_4_TEMPERATURE,
-  SIDECAR_PRESSURE_1_VALUE,
-  SIDECAR_PRESSURE_2_VALUE,
-  SIDECAR_LEAK_SENSOR,
-  SIDECAR_TEMPERATURE,
-  SIDECAR_HUMIDITY,
-  SIDECAR_RESERVED_1,
-  SIDECAR_RESERVED_2,
-  SIDECAR_RESERVED_3,
-  SIDECAR_RESERVED_4,
-  SIDECAR_RESERVED_5,
-  SIDECAR_RESERVED_6,
-  SIDECAR_RESERVED_7,
-} SideCarSensReadCase_t;
-
-typedef enum {
-  PUMP_1_RPM = DEVCTRL_REG_START,
-  PUMP_2_RPM,
-  PROPORTIONAL_VALVE_1_DUTY,
-  PROPORTIONAL_VALVE_2_DUTY,
-  RESERVED_CTRL_1,
-  RESERVED_CTRL_2,
-  RESERVED_CTRL_3,
-  RESERVED_CTRL_4,
-  RESERVED_CTRL_5,
-  RESERVED_CTRL_6,
-  RESERVED_CTRL_7,
-  RESERVED_CTRL_8,
-  RESERVED_CTRL_9,
-  RESERVED_CTRL_10,
-  RESERVED_CTRL_11,
-  RESERVED_CTRL_12,
-} DevCtrlCase_t;
-
-typedef enum {
-  SIDECAR_PRESSURE_PUMP = SENS_CARD_DEVCTRL_REG_START,
-  SIDECAR_RESERVED_CTRL_1,
-  SIDECAR_RESERVED_CTRL_2,
-  SIDECAR_RESERVED_CTRL_3,
-  SIDECAR_RESERVED_CTRL_4,
-  SIDECAR_RESERVED_CTRL_5,
-  SIDECAR_RESERVED_CTRL_6,
-  SIDECAR_RESERVED_CTRL_7,
-  SIDECAR_RESERVED_CTRL_8,
-  SIDECAR_RESERVED_CTRL_9,
-  SIDECAR_RESERVED_CTRL_10,
-  SIDECAR_RESERVED_CTRL_11,
-  SIDECAR_RESERVED_CTRL_12,
-  SIDECAR_RESERVED_CTRL_13,
-  SIDECAR_RESERVED_CTRL_14,
-  SIDECAR_RESERVED_CTRL_15,
-} SideCarDevCtrlCase_t;
-
-typedef enum {
-  FAN_1_FEEDBACK = FANS_CARD_REG_START,
-  FAN_2_FEEDBACK,
-  FAN_3_FEEDBACK,
-  FAN_4_FEEDBACK,
-  FAN_5_FEEDBACK,
-  FAN_6_FEEDBACK,
-  FAN_7_FEEDBACK,
-  FAN_8_FEEDBACK,
-  FAN_9_FEEDBACK,
-  FAN_10_FEEDBACK,
-  FAN_11_FEEDBACK,
-  FAN_12_FEEDBACK,
-  FAN_13_FEEDBACK,
-  FAN_14_FEEDBACK,
-  FAN_15_FEEDBACK,
-  FAN_16_FEEDBACK,
-  FAN_1_DUTY,
-  FAN_2_DUTY,
-  FAN_3_DUTY,
-  FAN_4_DUTY,
-  FAN_5_DUTY,
-  FAN_6_DUTY,
-  FAN_7_DUTY,
-  FAN_8_DUTY,
-  FAN_9_DUTY,
-  FAN_10_DUTY,
-  FAN_11_DUTY,
-  FAN_12_DUTY,
-  FAN_13_DUTY,
-  FAN_14_DUTY,
-  FAN_15_DUTY,
-  FAN_16_DUTY,
-} FansCardCase_t;
-
+#if defined(CDU_RS485)
 uint32_t SysInfom_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
@@ -538,90 +374,6 @@ uint32_t DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t l
   }
 }
 
-uint32_t SideCar_Sens_DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
-  if (func == READ_HOLDING_REGISTERS) {
-    switch (addr) {
-      case SIDECAR_PT100_1_TEMPERATURE:
-        return (SensCardStat.pt100_1_temp_m / 100) & 0xFFFF;
-      case SIDECAR_PT100_2_TEMPERATURE:
-        return (SensCardStat.pt100_2_temp_m / 100) & 0xFFFF;
-      case SIDECAR_PT100_3_TEMPERATURE:
-        return (SensCardStat.pt100_3_temp_m / 100) & 0xFFFF;
-      case SIDECAR_PT100_4_TEMPERATURE:
-        return (SensCardStat.pt100_4_temp_m / 100) & 0xFFFF;
-      case SIDECAR_PRESSURE_1_VALUE:
-        return (SensCardStat.press_1_val_kpa) & 0xFFFF;
-      case SIDECAR_PRESSURE_2_VALUE:
-        return (SensCardStat.press_2_val_kpa) & 0xFFFF;
-      case SIDECAR_LEAK_SENSOR:
-        return SensCardStat.leak_sensor & 0xFFFF;
-      case SIDECAR_TEMPERATURE:
-        return SensCardStat.temperature & 0xFFFF;
-      case SIDECAR_HUMIDITY:
-        return SensCardStat.humidity & 0xFFFF;
-      case SIDECAR_RESERVED_1:
-        return 0;
-      case SIDECAR_RESERVED_2:
-        return 0;
-      case SIDECAR_RESERVED_3:
-        return 0;
-      case SIDECAR_RESERVED_4:
-        return 0;
-      case SIDECAR_RESERVED_5:
-        return 0;
-      case SIDECAR_RESERVED_6:
-        return 0;
-      case SIDECAR_RESERVED_7:
-        return 0;
-      default:
-        return 0;
-    }
-  } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
-    if (root) {
-      switch (addr) {
-        case SIDECAR_PT100_1_TEMPERATURE:
-          return (SensCardStat.pt100_1_temp_m = data * 10) & 0xFFFF;
-        case SIDECAR_PT100_2_TEMPERATURE:
-          return (SensCardStat.pt100_2_temp_m = data * 10) & 0xFFFF;
-        case SIDECAR_PT100_3_TEMPERATURE:
-          return (SensCardStat.pt100_3_temp_m = data * 10) & 0xFFFF;
-        case SIDECAR_PT100_4_TEMPERATURE:
-          return (SensCardStat.pt100_4_temp_m = data * 10) & 0xFFFF;
-        case SIDECAR_PRESSURE_1_VALUE:
-          return (SensCardStat.press_1_val_kpa = data) & 0xFFFF;
-        case SIDECAR_PRESSURE_2_VALUE:
-          return (SensCardStat.press_2_val_kpa = data) & 0xFFFF;
-        case SIDECAR_LEAK_SENSOR:
-          return (SensCardStat.leak_sensor = data) & 0xFFFF;
-        case SIDECAR_TEMPERATURE:
-          return (SensCardStat.temperature = data) & 0xFFFF;
-        case SIDECAR_HUMIDITY:
-          return (SensCardStat.humidity = data) & 0xFFFF;
-        case SIDECAR_RESERVED_1:
-          return 0;
-        case SIDECAR_RESERVED_2:
-          return 0;
-        case SIDECAR_RESERVED_3:
-          return 0;
-        case SIDECAR_RESERVED_4:
-          return 0;
-        case SIDECAR_RESERVED_5:
-          return 0;
-        case SIDECAR_RESERVED_6:
-          return 0;
-        case SIDECAR_RESERVED_7:
-          return 0;
-        default:
-          return 0;
-      }
-    } else {
-      return ILLIGAL_FUNC << 16;
-    }
-  } else {
-    return ILLIGAL_FUNC << 16;
-  }
-}
-
 uint32_t DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
   if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
     if (data >= 0 && data <= 1000) {
@@ -700,6 +452,92 @@ uint32_t DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t le
         return 0;
       default:
         return 0;
+    }
+  } else {
+    return ILLIGAL_FUNC << 16;
+  }
+}
+#endif
+
+#if defined(SENS_RS485) || defined(CDU_RS485)
+uint32_t SideCar_Sens_DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
+  if (func == READ_HOLDING_REGISTERS) {
+    switch (addr) {
+      case SIDECAR_PT100_1_TEMPERATURE:
+        return (SensCardStat.pt100_1_temp_m / 100) & 0xFFFF;
+      case SIDECAR_PT100_2_TEMPERATURE:
+        return (SensCardStat.pt100_2_temp_m / 100) & 0xFFFF;
+      case SIDECAR_PT100_3_TEMPERATURE:
+        return (SensCardStat.pt100_3_temp_m / 100) & 0xFFFF;
+      case SIDECAR_PT100_4_TEMPERATURE:
+        return (SensCardStat.pt100_4_temp_m / 100) & 0xFFFF;
+      case SIDECAR_PRESSURE_1_VALUE:
+        return (SensCardStat.press_1_val_kpa) & 0xFFFF;
+      case SIDECAR_PRESSURE_2_VALUE:
+        return (SensCardStat.press_2_val_kpa) & 0xFFFF;
+      case SIDECAR_LEAK_SENSOR:
+        return SensCardStat.leak_sensor & 0xFFFF;
+      case SIDECAR_TEMPERATURE:
+        return SensCardStat.temperature & 0xFFFF;
+      case SIDECAR_HUMIDITY:
+        return SensCardStat.humidity & 0xFFFF;
+      case SIDECAR_RESERVED_1:
+        return 0;
+      case SIDECAR_RESERVED_2:
+        return 0;
+      case SIDECAR_RESERVED_3:
+        return 0;
+      case SIDECAR_RESERVED_4:
+        return 0;
+      case SIDECAR_RESERVED_5:
+        return 0;
+      case SIDECAR_RESERVED_6:
+        return 0;
+      case SIDECAR_RESERVED_7:
+        return 0;
+      default:
+        return 0;
+    }
+  } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
+    if (root) {
+      switch (addr) {
+        case SIDECAR_PT100_1_TEMPERATURE:
+          return (SensCardStat.pt100_1_temp_m = data * 100) & 0xFFFF;
+        case SIDECAR_PT100_2_TEMPERATURE:
+          return (SensCardStat.pt100_2_temp_m = data * 100) & 0xFFFF;
+        case SIDECAR_PT100_3_TEMPERATURE:
+          return (SensCardStat.pt100_3_temp_m = data * 100) & 0xFFFF;
+        case SIDECAR_PT100_4_TEMPERATURE:
+          return (SensCardStat.pt100_4_temp_m = data * 100) & 0xFFFF;
+        case SIDECAR_PRESSURE_1_VALUE:
+          return (SensCardStat.press_1_val_kpa = data) & 0xFFFF;
+        case SIDECAR_PRESSURE_2_VALUE:
+          return (SensCardStat.press_2_val_kpa = data) & 0xFFFF;
+        case SIDECAR_LEAK_SENSOR:
+          return (SensCardStat.leak_sensor = data) & 0xFFFF;
+        case SIDECAR_TEMPERATURE:
+          return (SensCardStat.temperature = data) & 0xFFFF;
+        case SIDECAR_HUMIDITY:
+          return (SensCardStat.humidity = data) & 0xFFFF;
+        case SIDECAR_RESERVED_1:
+          return 0;
+        case SIDECAR_RESERVED_2:
+          return 0;
+        case SIDECAR_RESERVED_3:
+          return 0;
+        case SIDECAR_RESERVED_4:
+          return 0;
+        case SIDECAR_RESERVED_5:
+          return 0;
+        case SIDECAR_RESERVED_6:
+          return 0;
+        case SIDECAR_RESERVED_7:
+          return 0;
+        default:
+          return 0;
+      }
+    } else {
+      return ILLIGAL_FUNC << 16;
     }
   } else {
     return ILLIGAL_FUNC << 16;
@@ -789,6 +627,10 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
     return ILLIGAL_FUNC << 16;
   }
 }
+
+#endif
+
+#if defined(FAN_RS485) || defined(CDU_RS485)
 
 uint32_t FansCard_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
   if (func == READ_HOLDING_REGISTERS) {
@@ -1009,3 +851,4 @@ uint32_t FanCardSysDisp_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uin
     return ILLIGAL_FUNC << 16;
   }
 }
+#endif
