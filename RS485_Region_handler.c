@@ -20,9 +20,18 @@
 #endif
 
 #if defined(CDU_RS485)
-uint32_t SysInfom_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
+uint32_t SysInform_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
+      case POWER_ON_SETTING:
+        return SysInform.power_on_setting & 0xFFFF;
+      default:
+        return 0;
+    }
+  } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
+    switch (addr) {
+      case POWER_ON_SETTING:
+        return (SysInform.power_on_setting = data) & 0xFFFF;
       default:
         return 0;
     }
@@ -37,7 +46,7 @@ uint32_t SysParaSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t
       case AUTOMATIC_MODE:
         return SysParaSet.ctrl_mode & 0xFFFF;
       case TEMPERATURE_SET_POINT:
-        return SysParaSet.temp_set & 0xFFFF;
+        return SysParaSet.temp_set / 100 & 0xFFFF;
       case FLOW_SET_POINT:
         return SysParaSet.flow_set & 0xFFFF;
       case DIFFERENTIAL_PRESSURE_SET_POINT:
@@ -118,7 +127,7 @@ uint32_t SysParaSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t
       case AUTOMATIC_MODE:
         return (SysParaSet.ctrl_mode = data) & 0xFFFF;
       case TEMPERATURE_SET_POINT:
-        return (SysParaSet.temp_set = data) & 0xFFFF;
+        return (SysParaSet.temp_set = data * 100) & 0xFFFF;
       case FLOW_SET_POINT:
         return (SysParaSet.flow_set = data) & 0xFFFF;
       case DIFFERENTIAL_PRESSURE_SET_POINT:
