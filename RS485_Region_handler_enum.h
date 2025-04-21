@@ -45,12 +45,28 @@
 #define FANS_CARD_SYS_DISP_REG_END 0x00DF
 #define FANS_CARD_SYS_DISP_NUM (FANS_CARD_SYS_DISP_REG_END - FANS_CARD_SYS_DISP_REG_START + 1)
 
+#define IS_SIDECAR_WRITABLE_REG(func, addr)                                           \
+  ((((func) == WRITE_SINGLE_REGISTER) || ((func) == WRITE_MULTIPLE_REGISTERS)) &&     \
+   (((addr) >= SENS_CARD_DEVCTRL_REG_START && (addr) <= SENS_CARD_DEVCTRL_REG_END) || \
+    ((addr) >= FANS_CARD_WRITE_REG_START && (addr) <= FANS_CARD_WRITE_REG_END) ||     \
+    ((addr) >= FANS_CARD_SYS_SET_REG_START && (addr) <= FANS_CARD_SYS_SET_REG_END)))
+
+#define IS_SENSCARD_WRITABLE_REG(func, addr)                                      \
+  ((((func) == WRITE_SINGLE_REGISTER) || ((func) == WRITE_MULTIPLE_REGISTERS)) && \
+   ((addr) >= SENS_CARD_DEVCTRL_REG_START && (addr) <= SENS_CARD_DEVCTRL_REG_END))
+
+#define IS_FANCARD_WRITABLE_REG(func, addr)                                       \
+  ((((func) == WRITE_SINGLE_REGISTER) || ((func) == WRITE_MULTIPLE_REGISTERS)) && \
+   (((addr) >= FANS_CARD_WRITE_REG_START && (addr) <= FANS_CARD_WRITE_REG_END) || \
+    ((addr) >= FANS_CARD_SYS_SET_REG_START && (addr) <= FANS_CARD_SYS_SET_REG_END)))
+
 #define CDU_RS485_ADDR 0x21
 #define SENS_RS485_ADDR 0x22
 #define FAN_RS485_ADDR 0x23
 
 typedef enum {
-  POWER_ON_SETTING = 1,
+  SYSTEM_RESERVED = SYSINFORM_REG_START,
+  POWER_ON_SETTING,
 } SysInformCase_t;
 
 typedef enum {

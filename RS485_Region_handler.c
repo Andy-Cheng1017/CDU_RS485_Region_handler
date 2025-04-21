@@ -554,15 +554,6 @@ uint32_t SideCar_Sens_DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t da
 }
 
 uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
-#ifdef CDU_RS485
-  if (func == WRITE_SINGLE_REGISTER && !root) {
-    write_ip = SENS_RS485_ADDR;
-    write_card_address = addr;
-    write_card_data = data;
-    xTaskNotifyGive(WriteCardHandler);
-    return 0;
-  }
-#endif
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case SIDECAR_PRESSURE_PUMP:
@@ -651,15 +642,6 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
 #if defined(FAN_RS485) || defined(CDU_RS485)
 
 uint32_t FansCard_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
-#ifdef CDU_RS485
-  if (func == WRITE_SINGLE_REGISTER && !root) {
-    write_ip = FAN_RS485_ADDR;
-    write_card_address = addr;
-    write_card_data = data;
-    xTaskNotifyGive(WriteCardHandler);
-    return 0;
-  }
-#endif
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case FAN_1_FEEDBACK:
@@ -821,16 +803,6 @@ uint32_t FansCard_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t l
 }
 
 uint32_t FanCardSysSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
-#ifdef CDU_RS485
-  if (func == WRITE_SINGLE_REGISTER && !root) {
-    write_ip = FAN_RS485_ADDR;
-    write_card_address = addr;
-    write_card_data = data;
-    xTaskNotifyGive(WriteCardHandler);
-    return 0;
-  }
-#endif
-
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case FAN_ALARM_MODE:
