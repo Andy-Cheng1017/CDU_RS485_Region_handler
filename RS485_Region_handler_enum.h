@@ -259,7 +259,7 @@ typedef enum {
 } FanCardSysSetCase_t;
 
 typedef enum {
-  FAN_BOARD_FAULT_STATUS,
+  FAN_FAULT_STATUS,
   FAN_STATUS_ON_FAN_BOARD_BITFIELD_0_15,
 } FanCardSysDispCase_t;
 
