@@ -819,6 +819,10 @@ uint32_t FanCardSysSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint
         return FanCardSysSet.fan_alarm.fan_low_speed_warning_threshold & 0xFFFF;
       case FAN_FG_DIFFERENCE_WARNING_THRESHOLD:
         return FanCardSysSet.fan_alarm.fan_fg_difference_warning_threshold & 0xFFFF;
+      case FAN_SPEED_SAMPLING_INTERVAL_MS:
+        return FanCardSysSet.fan_speed_sampling_interval_ms & 0xFFFF;
+      case WEIGHTED_MOVING_AVERAGE_COUNT:
+        return FanCardSysSet.weighted_moving_average_count & 0xFFFF;
       default:
         return 0;
     }
@@ -838,6 +842,14 @@ uint32_t FanCardSysSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint
         return (FanCardSysSet.fan_alarm.fan_low_speed_warning_threshold = data) & 0xFFFF;
       case FAN_FG_DIFFERENCE_WARNING_THRESHOLD:
         return (FanCardSysSet.fan_alarm.fan_fg_difference_warning_threshold = data) & 0xFFFF;
+      case FAN_SPEED_SAMPLING_INTERVAL_MS:
+        return (FanCardSysSet.fan_speed_sampling_interval_ms = data) & 0xFFFF;
+      case WEIGHTED_MOVING_AVERAGE_COUNT:
+        if (((data & (data - 1)) == 0) && (data <= FG_SAMPLE_COUNT_MAX)) {
+          return (FanCardSysSet.weighted_moving_average_count = data) & 0xFFFF;
+        } else {
+          return 0 << 16;
+        }
       default:
         return 0;
     }
@@ -853,18 +865,24 @@ uint32_t FanCardSysDisp_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uin
         return FanCardSysDisp.fan_fault_status & 0xFFFF;
       case FAN_STATUS_ON_FAN_BOARD_BITFIELD_0_15:
         return FanCardSysDisp.fan_status_on_fan_board_bitfield_0_15 & 0xFFFF;
+      case FAN_COUNT:
+        return FanCardSysDisp.fan_count & 0xFFFF;
       default:
         return 0;
     }
+#ifndef FAN_RS485
   } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
     switch (addr) {
       case FAN_FAULT_STATUS:
         return (FanCardSysDisp.fan_fault_status = data) & 0xFFFF;
       case FAN_STATUS_ON_FAN_BOARD_BITFIELD_0_15:
         return (FanCardSysDisp.fan_status_on_fan_board_bitfield_0_15 = data) & 0xFFFF;
+      case FAN_COUNT:
+        return (FanCardSysDisp.fan_count = data) & 0xFFFF;
       default:
         return 0;
     }
+#endif  // !FAN_RS485
   } else {
     return ILLIGAL_FUNC << 16;
   }
