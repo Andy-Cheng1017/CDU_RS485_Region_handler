@@ -839,7 +839,7 @@ uint32_t FanCardSysSet_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint
       case FAN_FG_DIFFERENCE_WARNING_THRESHOLD:
         return (FanCardSysSet.fan_alarm.fan_fg_difference_warning_threshold = data) & 0xFFFF;
       default:
-        return ILLIGAL_DATA_ADDR << 16;
+        return 0;
     }
   } else {
     return ILLIGAL_FUNC << 16;
@@ -853,6 +853,15 @@ uint32_t FanCardSysDisp_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uin
         return FanCardSysDisp.fan_fault_status & 0xFFFF;
       case FAN_STATUS_ON_FAN_BOARD_BITFIELD_0_15:
         return FanCardSysDisp.fan_status_on_fan_board_bitfield_0_15 & 0xFFFF;
+      default:
+        return 0;
+    }
+  } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
+    switch (addr) {
+      case FAN_BOARD_FAULT_STATUS:
+        return (FanCardSysDisp.fan_board_fault_status = data) & 0xFFFF;
+      case FAN_STATUS_ON_FAN_BOARD_BITFIELD_0_15:
+        return (FanCardSysDisp.fan_status_on_fan_board_bitfield_0_15 = data) & 0xFFFF;
       default:
         return 0;
     }
