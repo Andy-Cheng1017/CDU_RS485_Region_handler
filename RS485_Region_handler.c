@@ -469,13 +469,13 @@ uint32_t SideCar_Sens_DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t da
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case SIDECAR_PT100_1_TEMPERATURE:
-        return (SensCardStat.pt100_1_temp_m / 100) & 0xFFFF;
+        return (SensCardStat.pt100_temp_m[0] / 100) & 0xFFFF;
       case SIDECAR_PT100_2_TEMPERATURE:
-        return (SensCardStat.pt100_2_temp_m / 100) & 0xFFFF;
+        return (SensCardStat.pt100_temp_m[1] / 100) & 0xFFFF;
       case SIDECAR_PT100_3_TEMPERATURE:
-        return (SensCardStat.pt100_3_temp_m / 100) & 0xFFFF;
+        return (SensCardStat.pt100_temp_m[2] / 100) & 0xFFFF;
       case SIDECAR_PT100_4_TEMPERATURE:
-        return (SensCardStat.pt100_4_temp_m / 100) & 0xFFFF;
+        return (SensCardStat.pt100_temp_m[3] / 100) & 0xFFFF;
       case SIDECAR_PRESSURE_1_VALUE:
         return (SensCardStat.press_1_val_kpa) & 0xFFFF;
       case SIDECAR_PRESSURE_2_VALUE:
@@ -507,13 +507,13 @@ uint32_t SideCar_Sens_DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t da
     if (root) {
       switch (addr) {
         case SIDECAR_PT100_1_TEMPERATURE:
-          return (SensCardStat.pt100_1_temp_m = data * 100) & 0xFFFF;
+          return (SensCardStat.pt100_temp_m[0] = data * 100) & 0xFFFF;
         case SIDECAR_PT100_2_TEMPERATURE:
-          return (SensCardStat.pt100_2_temp_m = data * 100) & 0xFFFF;
+          return (SensCardStat.pt100_temp_m[1] = data * 100) & 0xFFFF;
         case SIDECAR_PT100_3_TEMPERATURE:
-          return (SensCardStat.pt100_3_temp_m = data * 100) & 0xFFFF;
+          return (SensCardStat.pt100_temp_m[2] = data * 100) & 0xFFFF;
         case SIDECAR_PT100_4_TEMPERATURE:
-          return (SensCardStat.pt100_4_temp_m = data * 100) & 0xFFFF;
+          return (SensCardStat.pt100_temp_m[3] = data * 100) & 0xFFFF;
         case SIDECAR_PRESSURE_1_VALUE:
           return (SensCardStat.press_1_val_kpa = data) & 0xFFFF;
         case SIDECAR_PRESSURE_2_VALUE:
@@ -555,7 +555,7 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
       case SIDECAR_PRESSURE_PUMP:
         return SensCardCtrl.pressure_pump & 0xFFFF;
       case SIDECAR_PT100_CHANNEL_ENABLE_SETTING:
-        return 0;
+        return (SensCardCtrl.pt100_enable & 0xFFFF);
       case SIDECAR_RESERVED_CTRL_2:
         return 0;
       case SIDECAR_RESERVED_CTRL_3:
@@ -593,7 +593,7 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
         case SIDECAR_PRESSURE_PUMP:
           return (SensCardCtrl.pressure_pump = data) & 0xFFFF;
         case SIDECAR_PT100_CHANNEL_ENABLE_SETTING:
-          return 0;
+          return (SensCardCtrl.pt100_enable = data) & 0xFFFF;
         case SIDECAR_RESERVED_CTRL_2:
           return 0;
         case SIDECAR_RESERVED_CTRL_3:
