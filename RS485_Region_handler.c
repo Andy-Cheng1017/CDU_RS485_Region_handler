@@ -239,13 +239,13 @@ uint32_t DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t l
   if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case PT100_1_TEMPERATURE:
-        return (Pt100Stat.pt100_1_temp_m / 100) & 0xFFFF;
+        return (Pt100Stat.pt100_temp_m[0] / 100) & 0xFFFF;
       case PT100_2_TEMPERATURE:
-        return (Pt100Stat.pt100_2_temp_m / 100) & 0xFFFF;
+        return (Pt100Stat.pt100_temp_m[1] / 100) & 0xFFFF;
       case PT100_3_TEMPERATURE:
-        return (Pt100Stat.pt100_3_temp_m / 100) & 0xFFFF;
+        return (Pt100Stat.pt100_temp_m[2] / 100) & 0xFFFF;
       case PT100_4_TEMPERATURE:
-        return (Pt100Stat.pt100_4_temp_m / 100) & 0xFFFF;
+        return (Pt100Stat.pt100_temp_m[3] / 100) & 0xFFFF;
       case NTC_1_TEMPERATURE:
         return (SensStat.ntc_1_temp_m / 100) & 0xFFFF;
       case NTC_2_TEMPERATURE:
@@ -384,48 +384,7 @@ uint32_t DataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t l
 }
 
 uint32_t DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t len, bool root) {
-  if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
-    if (data >= 0 && data <= 1000) {
-      switch (addr) {
-        case PUMP_1_RPM:
-          return (pump_control.pump_1_rpm = data) & 0xFFFF;
-        case PUMP_2_RPM:
-          return (pump_control.pump_2_rpm = data) & 0xFFFF;
-        case PROPORTIONAL_VALVE_1_DUTY:
-          return (SensCtrl.porpo_1_duty = data) & 0xFFFF;
-        case PROPORTIONAL_VALVE_2_DUTY:
-          return (SensCtrl.porpo_2_duty = data) & 0xFFFF;
-        case RESERVED_CTRL_1:
-          return 0;
-        case RESERVED_CTRL_2:
-          return 0;
-        case RESERVED_CTRL_3:
-          return 0;
-        case RESERVED_CTRL_4:
-          return 0;
-        case RESERVED_CTRL_5:
-          return 0;
-        case RESERVED_CTRL_6:
-          return 0;
-        case RESERVED_CTRL_7:
-          return 0;
-        case RESERVED_CTRL_8:
-          return 0;
-        case RESERVED_CTRL_9:
-          return 0;
-        case RESERVED_CTRL_10:
-          return 0;
-        case RESERVED_CTRL_11:
-          return 0;
-        case RESERVED_CTRL_12:
-          return 0;
-        default:
-          return 0;
-      }
-    } else {
-      return ILLIGAL_DATA_VALUE << 16;
-    }
-  } else if (func == READ_HOLDING_REGISTERS) {
+  if (func == READ_HOLDING_REGISTERS) {
     switch (addr) {
       case PUMP_1_RPM:
         return (pump_control.pump_1_rpm & 0xFFFF);
@@ -435,8 +394,45 @@ uint32_t DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t le
         return (SensCtrl.porpo_1_duty & 0xFFFF);
       case PROPORTIONAL_VALVE_2_DUTY:
         return (SensCtrl.porpo_2_duty & 0xFFFF);
-      case RESERVED_CTRL_1:
+      case PT100_CHANNEL_ENABLE_SETTING:
+        return (Pt100Stat.pt100_enable & 0xFFFF);
+      case RESERVED_CTRL_2:
         return 0;
+      case RESERVED_CTRL_3:
+        return 0;
+      case RESERVED_CTRL_4:
+        return 0;
+      case RESERVED_CTRL_5:
+        return 0;
+      case RESERVED_CTRL_6:
+        return 0;
+      case RESERVED_CTRL_7:
+        return 0;
+      case RESERVED_CTRL_8:
+        return 0;
+      case RESERVED_CTRL_9:
+        return 0;
+      case RESERVED_CTRL_10:
+        return 0;
+      case RESERVED_CTRL_11:
+        return 0;
+      case RESERVED_CTRL_12:
+        return 0;
+      default:
+        return 0;
+    }
+  } else if (func == WRITE_SINGLE_REGISTER || func == WRITE_MULTIPLE_REGISTERS) {
+    switch (addr) {
+      case PUMP_1_RPM:
+        return (pump_control.pump_1_rpm = data) & 0xFFFF;
+      case PUMP_2_RPM:
+        return (pump_control.pump_2_rpm = data) & 0xFFFF;
+      case PROPORTIONAL_VALVE_1_DUTY:
+        return (SensCtrl.porpo_1_duty = data) & 0xFFFF;
+      case PROPORTIONAL_VALVE_2_DUTY:
+        return (SensCtrl.porpo_2_duty = data) & 0xFFFF;
+      case PT100_CHANNEL_ENABLE_SETTING:
+        return (Pt100Stat.pt100_enable = data) & 0xFFFF;
       case RESERVED_CTRL_2:
         return 0;
       case RESERVED_CTRL_3:
@@ -558,7 +554,7 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
     switch (addr) {
       case SIDECAR_PRESSURE_PUMP:
         return SensCardCtrl.pressure_pump & 0xFFFF;
-      case SIDECAR_RESERVED_CTRL_1:
+      case SIDECAR_PT100_CHANNEL_ENABLE_SETTING:
         return 0;
       case SIDECAR_RESERVED_CTRL_2:
         return 0;
@@ -596,7 +592,7 @@ uint32_t SideCar_Sens_DevCtrl_Handler(RsFunc_t func, uint16_t addr, uint16_t dat
       switch (addr) {
         case SIDECAR_PRESSURE_PUMP:
           return (SensCardCtrl.pressure_pump = data) & 0xFFFF;
-        case SIDECAR_RESERVED_CTRL_1:
+        case SIDECAR_PT100_CHANNEL_ENABLE_SETTING:
           return 0;
         case SIDECAR_RESERVED_CTRL_2:
           return 0;
