@@ -67,6 +67,9 @@
 typedef enum {
   SYSTEM_RESERVED = SYSINFORM_REG_START,
   POWER_ON_SETTING,
+  KP,
+  KI,
+  KD,
 } SysInformCase_t;
 
 typedef enum {

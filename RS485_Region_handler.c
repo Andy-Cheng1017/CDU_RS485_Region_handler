@@ -4,6 +4,7 @@
 #include "task.h"
 
 #ifdef CDU_RS485
+#include "PID.h"
 #include "main_task.h"
 #include "power_task.h"
 #include "pt100_task.h"
@@ -25,6 +26,12 @@ uint32_t SysInform_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t 
     switch (addr) {
       case POWER_ON_SETTING:
         return SysInform.power_on_setting & 0xFFFF;
+      case KP:
+        return (uint16_t)(CUD_PID.kp * 100) & 0xFFFF;
+      case KI:
+        return (uint16_t)(CUD_PID.ki * 100) & 0xFFFF;
+      case KD:
+        return (uint16_t)(CUD_PID.kd * 100) & 0xFFFF;
       default:
         return 0;
     }
@@ -32,6 +39,15 @@ uint32_t SysInform_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8_t 
     switch (addr) {
       case POWER_ON_SETTING:
         return (SysInform.power_on_setting = data) & 0xFFFF;
+      case KP:
+        CUD_PID.kp = ((float)data / 100.0);
+        return data & 0xFFFF;
+      case KI:
+        CUD_PID.ki = ((float)data / 100.0);
+        return data & 0xFFFF;
+      case KD:
+        CUD_PID.kd = ((float)data / 100.0);
+        return data & 0xFFFF;
       default:
         return 0;
     }
