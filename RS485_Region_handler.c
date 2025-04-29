@@ -42,9 +42,18 @@ void RsRegHdle_Init() {
   RsRegHdle(Fans_FG_PWM_Set_Handler, FANS_FG_PWM_SET_REG_START, FANS_FG_PWM_SET_REG_END);
 }
 #elif SENS_RS485
-void RsRegHdle_Init() {}
+void RsRegHdle_Init() {
+  RsRegHdle(SensDataRead_Handler, SENS_DATA_READ_REG_START, SENS_DATA_READ_REG_END);
+  RsRegHdle(SensDataCalib_Handler, SENS_DATA_CALIB_REG_START, SENS_DATA_CALIB_REG_END);
+  RsRegHdle(SensDevCtrl_Handler, SENS_DEV_CTRL_REG_START, SENS_DEV_CTRL_REG_END);
+  RsRegHdle(SideCarPowerRead_Handler, SIDECAR_POWER_READ_REG_START, SIDECAR_POWER_READ_REG_END);
+}
 #elif FAN_RS485
-void RsRegHdle_Init() {}
+void RsRegHdle_Init() {
+  RsRegHdle(FanSysSet_Handler, FANS_SYS_SET_REG_START, FANS_SYS_SET_REG_END);
+  RsRegHdle(FanSysDisp_Handler, FANS_SYS_DISP_REG_START, FANS_SYS_DISP_REG_END);
+  RsRegHdle(Fans_FG_PWM_Set_Handler, FANS_FG_PWM_SET_REG_START, FANS_FG_PWM_SET_REG_END);
+}
 #endif
 
 #if defined(CDU_RS485)
@@ -247,8 +256,6 @@ uint32_t MainDataRead_Handler(RsFunc_t func, uint16_t addr, uint16_t data, uint8
       CASE_RW(SensStat.humidity);
     case DEW_TEMPERATURE:
       CASE_RW(SensStat.dew_temp);
-    case FAN_1_FEEDBACK_TEMP:
-      return FansCardStat.fan_fg[0] & 0xFFFF;
     case DEVICE_CONNECTED:
       return 0;
     default:
