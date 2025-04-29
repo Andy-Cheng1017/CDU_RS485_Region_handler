@@ -15,6 +15,7 @@
 #elif SENS_RS485
 #include "pressure_task.h"
 #include "pt100_task.h"
+#include "power_task.h"
 #elif FAN_RS485
 #include "FG_task.h"
 #include "PWM_task.h"
